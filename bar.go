@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"unicode/utf8"
 	"unsafe"
 )
 
@@ -20,6 +21,9 @@ const (
 	WindowsCmd    ModelType = false
 	Highlight ShowType = 1
 	Flicker ShowType = 5
+	BasicCompletedIcon rune = '█'
+	BasicUnCompletedIcon byte = ' '
+
 )
 
 //前景颜色
@@ -84,13 +88,14 @@ type __bar struct {
 	currentPosition int64     //当前进度位置
 	total           int64     //总进度
 	bar             []byte    //进度条
+	left int
+	right int
 	config *BarConfig //进度条配置
 }
 
 type BarConfig struct {
-	completedIcon   byte       //已完成的图案
+	completedIcon   rune       //已完成的图案
 	unCompletedIcon byte       //未完成的图案
-	cursorIcon      byte       //游标的图案
 	frontColor      PrintColor // 前景色
 	backColor       PrintColor //背景色
 	showWay         ShowType   //显示方式
@@ -101,21 +106,11 @@ type BarConfig struct {
 // NewBar 创建进度条对象，显示模式默认为在Linux Terminal下
 //默认范围:[0，total),默认显示图案：=，默认显示颜色：绿色（32）
 func NewBar(total int64) Bar {
-	return NewOptionWithGraphAndModel(0, total, '=', LinuxTerminal)
-}
-
-// NewBarWithRange 创建进度条对象并设置相应范围
-func NewBarWithRange(start, total int64) Bar {
-	return NewOptionWithGraphAndModel(start, total, '=', LinuxTerminal)
-}
-
-// NewOptionWithGraph 创建自定义范围的进度条对象，并自定义图案
-func NewOptionWithGraph(start, total int64, completedIcon byte) Bar {
-	return NewOptionWithGraphAndModel(start, total, completedIcon, LinuxTerminal)
+	return NewOptionWithGraphAndModel(0, total, BasicCompletedIcon, LinuxTerminal)
 }
 
 // NewOptionWithGraphAndModel 创建自定义范围、图案的进度条对象，并自定义显示模式
-func NewOptionWithGraphAndModel(start, total int64, completedIcon byte, model ModelType) Bar {
+func NewOptionWithGraphAndModel(start, total int64, completedIcon rune, model ModelType) Bar {
 	config:=NewDefaultBarConfig()
 	config.completedIcon = completedIcon
 	config.printModel = model
@@ -125,11 +120,10 @@ func NewOptionWithGraphAndModel(start, total int64, completedIcon byte, model Mo
 // NewDefaultBarConfig 创建默认配置对象
 func NewDefaultBarConfig()*BarConfig{
 	return &BarConfig{
-		completedIcon:   '=',
-		unCompletedIcon: ' ',
-		cursorIcon:      '=',
-		frontColor:      32,
-		backColor:       40,
+		completedIcon:   BasicCompletedIcon,
+		unCompletedIcon: BasicUnCompletedIcon,
+		frontColor:      FrontGreen,
+		backColor:       BackBlack,
 		showWay:         Highlight,
 		printModel:      LinuxTerminal,
 		printFunc:       nil,
@@ -142,10 +136,16 @@ func NewBarWithConfig(start,total int64, config *BarConfig) Bar{
 		currentPosition: start,
 		total:           total,
 		percent:         0.0,
-		bar:             make([]byte, 51),
+		bar:             make([]byte, 201),
 		config: config,
+		left: 0,
+		right:50,
 	}
 	b.config.SetShowModel(b.config.printModel)
+	//fill the area of uncompleted with the uncompleted icon
+	for i := 0; i < 50; i++ {
+		b.bar[i] = b.config.unCompletedIcon
+	}
 	return b
 }
 
@@ -170,9 +170,12 @@ func (bc *BarConfig) SetShowModel(model ModelType) {
 }
 
 // SetCompletedIcon 设置已完成进度的显示图案
-func (bc *BarConfig) SetCompletedIcon(icon byte) {
-	bc.cursorIcon = icon
-	bc.completedIcon = icon
+func (bc *BarConfig) SetCompletedIcon(icon rune) {
+	if utf8.RuneLen(icon) < 0{
+		bc.completedIcon = BasicCompletedIcon
+	}else{
+		bc.completedIcon = icon
+	}
 }
 
 // SetUnCompletedIcon 设置未完成进度的显示图案
@@ -181,7 +184,7 @@ func (bc *BarConfig) SetUnCompletedIcon(icon byte) {
 }
 
 // SetCursorIcon 设置游标的显示图案
-func (bc *BarConfig) SetCursorIcon(icon byte) {
+func (bc *BarConfig) SetCursorIcon(icon rune) {
 	bc.completedIcon = icon
 }
 
@@ -218,20 +221,32 @@ func (b *__bar) getPercent() float32 {
 // Play 执行一次记录
 func (b *__bar) Play(cur int64) {
 	b.currentPosition = cur
-	last := b.getPercent()
-	if b.percent != last {
-		var index, temp int
-		b.percent = last
-		temp = int(b.percent) >> 1
-		for index = 0; index < temp; index++ {
-			b.bar[index] = b.config.completedIcon
+	latest := b.getPercent()
+	//如果写成：int(latest-b.percent)会损失很多精度，导致最后进度条无法到达终点
+	var temp  = int(latest)-int(b.percent)
+	if b.percent != latest && temp%2 == 0  {
+		b.percent = latest
+		temp = temp>>1//(temp/2)
+		var start,n,i int
+		start = b.right
+		for i = 0; i < temp; i++ {
+			n = utf8.EncodeRune(b.bar[b.left:b.left+utf8.UTFMax], b.config.completedIcon)
+			b.left+=n
+			b.right+=n-1
 		}
-		b.bar[temp] = b.config.cursorIcon
-		for index = temp + 1; index < 50; index++ {
-			b.bar[index] = b.config.unCompletedIcon
+		b.excursion(start,b.right+n-1)
+	}
+	//将bar的[0:右边界]打印出来，以如下的方式传参，不会发生内存拷贝，仍然是同一地址
+	b.config.printFunc(b.bar[:b.right],b.percent,b.currentPosition,b.total)
+}
+
+// excursion 补充偏移的位置
+func (b *__bar) excursion(start,end int){
+	for i:=start;i<end;i++{
+		if int(b.bar[i]) < 100 {
+			b.bar[i] = b.config.unCompletedIcon
 		}
 	}
-	b.config.printFunc(b.bar,b.percent,b.currentPosition,b.total)
 }
 
 
@@ -248,6 +263,8 @@ func (bc *BarConfig)printInWindows(str []byte,percent float32,currPos,total int6
 // Finish 完成处理方法，在完成后会将相关数据归零，以便重新使用
 func (b *__bar) Finish() {
 	fmt.Printf("\n")
+	b.left = 0
+	b.right = 50
 	b.currentPosition = 0
 	b.percent = 0.0
 }
