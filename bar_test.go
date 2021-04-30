@@ -1,4 +1,4 @@
-package main
+package M3u8Downloader
 
 import (
 	"fmt"
@@ -12,15 +12,11 @@ import (
 func TestBar(t *testing.T) {
 	var bar = NewBar(36)
 	bar.Setting().SetShowModel(LinuxTerminal)
-	bar.Setting().completedIcon=9
-	fmt.Printf("ss\n")
 	for i:= 0; i<=36; i++{
 		time.Sleep(100*time.Millisecond)
-		bar.Play(int64(i))
+		bar.Update(int64(i))
 	}
 	bar.Finish()
-	//fmt.Printf("[\033[1;40;32m%s\033[0m]\n",  "testPrintColor",)
-	//fmt.Printf("\033[4;31;40m%s\033[0m\n","下划线 -  红色文字，黑色底哒")
 }
 
 //█████

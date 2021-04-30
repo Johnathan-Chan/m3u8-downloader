@@ -1,9 +1,6 @@
-package main
+package M3u8Downloader
 
 import (
-	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,6 +13,7 @@ import (
 	"unsafe"
 )
 
+// processNum 将小于10000的数字转化为字符串(前面补0)并添加后缀
 func processNum(n int)[]byte{
 	if n < 10 {
 		return []byte{48,48,48, byte(48 + n),'.','t','s'}
@@ -45,7 +43,7 @@ func getAllNonDirectoryFile(pathName string)([]string,error){
 	return Files, nil
 }
 
-
+// httpGet 发起get请求
 func httpGet(url string) (io.ReadCloser, DownloadExceptionType) {
 	client := http.Client{
 		Timeout: 30 * time.Second,
@@ -68,58 +66,7 @@ func httpGet(url string) (io.ReadCloser, DownloadExceptionType) {
 
 
 
-// parseLines 按行来解析m3u8文件
-func parseLines(lines []string) (*M3u8, error) {
-	var (
-		i       = 0
-		lineLen = len(lines)
-		m3u8    = &M3u8{}
-		key *Key
-		seg *Segment
-	)
-	for ; i < lineLen; i++ {
-		//TrimSpace返回字符串s的一个片段，去掉Unicode定义的所有前导和尾随空格。
-		line := strings.TrimSpace(lines[i])
-		if i == 0 {
-			if "#EXTM3U" != line {
-				return nil, errorMap[InvalidM3u8Exception]
-			}
-			continue
-		}
-		switch {
-		case line == "":
-			continue
-		case strings.HasPrefix(line, "#EXT-X-STREAM-INF:"):
-			i++
-			m3u8.MasterPlaylistURIs = append(m3u8.MasterPlaylistURIs, lines[i])
-			continue
-		case !strings.HasPrefix(line, "#"):
-			seg = new(Segment)
-			seg.URI = line
-			m3u8.Segments = append(m3u8.Segments, seg)
-			seg.Key = key
-			continue
-		case strings.HasPrefix(line, "#EXT-X-KEY"):
-			params := parseLineParameters(line)
-			if len(params) == 0 {
-				return nil, errorMap[InvalidEXT_X_KEY]
-			}
-			key = new(Key)
-			method := CryptMethod(params["METHOD"])
-			if method != "" && method != CryptMethodAES && method != CryptMethodNONE {
-				return nil, errorMap[InvalidEXT_X_KEYMethod]
-			}
-			key.Method = method
-			key.URI = params["URI"]
-			key.IV = params["IV"]
-		default:
-			continue
-		}
-	}
-	return m3u8, nil
-}
-
-//合并文件主函数
+// mergeFile 合并文件主函数
 func mergeFile(path string, fileList []string,saveName string)error{
 	var (
 		buffer StringBuilder
@@ -160,7 +107,8 @@ func mergeFile(path string, fileList []string,saveName string)error{
 }
 
 // getUnixTimeAndToByte 根据加当前时间戳设置为默认名称
-func getUnixTimeAndToByte() []byte {
+func getUnixTimeAndToByte() string {
+	//将int64转化成string
 	t1:=time.Now().Unix()
 	var temp int64
 	var buf  = make([]byte,10)
@@ -171,18 +119,10 @@ func getUnixTimeAndToByte() []byte {
 		i--
 		t1/=10
 	}
-	return buf//*(*string)(unsafe.Pointer(&buf))
+	return *(*string)(unsafe.Pointer(&buf))
 }
 
 
-func parseLineParameters(line string) map[string]string {
-	r := lineParameterPattern.FindAllStringSubmatch(line, -1)
-	params := make(map[string]string)
-	for _, arr := range r {
-		params[arr[1]] = strings.Trim(arr[2], "\"")
-	}
-	return params
-}
 
 // ResolveURL 处理Url
 func ResolveURL(u *url.URL, p string) string {
@@ -199,46 +139,35 @@ func ResolveURL(u *url.URL, p string) string {
 	return baseURL + path.Join("/", p)
 }
 
-func AES128Encrypt(origData, key, iv []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
+// PathExists 判断目录是否存在，若不存在则创建
+func PathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+
+
+// CheckAndCreatDirectory 判断目录是否存在，若不存在则创建
+func CheckAndCreatDirectory(path string) error {
+	_, err := os.Stat(path)
 	if err != nil {
-		return nil, err
+		if os.IsNotExist(err) {
+			//说明文件夹不存在
+			err = os.Mkdir(path, os.ModePerm)
+			if err != nil {
+				return err
+			}
+			return nil
+		}else{
+			//说明出现了错误，不能确定文件夹是否存在
+			return err
+		}
 	}
-	blockSize := block.BlockSize()
-	if len(iv) == 0 {
-		iv = key
-	}
-	origData = pkcs5Padding(origData, blockSize)
-	blockMode := cipher.NewCBCEncrypter(block, iv[:blockSize])
-	crypted := make([]byte, len(origData))
-	blockMode.CryptBlocks(crypted, origData)
-	return crypted, nil
-}
-
-func AES128Decrypt(crypted, key, iv []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	blockSize := block.BlockSize()
-	if len(iv) == 0 {
-		iv = key
-	}
-	blockMode := cipher.NewCBCDecrypter(block, iv[:blockSize])
-	origData := make([]byte, len(crypted))
-	blockMode.CryptBlocks(origData, crypted)
-	origData = pkcs5UnPadding(origData)
-	return origData, nil
-}
-
-func pkcs5Padding(cipherText []byte, blockSize int) []byte {
-	padding := blockSize - len(cipherText)%blockSize
-	padText := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(cipherText, padText...)
-}
-
-func pkcs5UnPadding(origData []byte) []byte {
-	length := len(origData)
-	unPadding := int(origData[length-1])
-	return origData[:(length - unPadding)]
+	return nil
 }

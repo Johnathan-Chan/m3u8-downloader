@@ -1,4 +1,4 @@
-package main
+package M3u8Downloader
 
 import (
 	"fmt"
@@ -52,8 +52,8 @@ const (
 
 var (
 	printModel = map[ModelType]string{
-		LinuxTerminal: "\r[\u001B[%d;%d;%dm%s\u001B[0m] %3.2f%% %8d/%d",
-		WindowsCmd:    "\r[%s] %3.2f%% %8d/%d",
+		LinuxTerminal: "\rProgress:[\u001B[%d;%d;%dm%s\u001B[0m] %3.2f%% Completed:[%3d] Total:[%3d]",
+		WindowsCmd:    "\rProgress:[%s] %3.2f%% Completed:[%3d] Total:[%3d]",
 	}
 )
 
@@ -66,7 +66,7 @@ type ModelFunc func([]byte,float32,int64,int64)
 
 type Bar interface {
 	// Play 执行一次记录
-	Play(cur int64)
+	Update(cur int64)
 	// Finish 完成处理方法，在完成后会将相关数据归零，以便重新使用
 	Finish()
 	// Setting 设置信息方法，通过此方法调用其他设置方法
@@ -121,7 +121,7 @@ func NewOptionWithGraphAndModel(start, total int64, completedIcon rune, model Mo
 func NewDefaultBarConfig()*BarConfig{
 	return &BarConfig{
 		completedIcon:   BasicCompletedIcon,
-		unCompletedIcon: BasicUnCompletedIcon,
+		//unCompletedIcon: BasicUnCompletedIcon,
 		frontColor:      FrontGreen,
 		backColor:       BackBlack,
 		showWay:         Highlight,
@@ -144,7 +144,7 @@ func NewBarWithConfig(start,total int64, config *BarConfig) Bar{
 	b.config.SetShowModel(b.config.printModel)
 	//fill the area of uncompleted with the uncompleted icon
 	for i := 0; i < 50; i++ {
-		b.bar[i] = b.config.unCompletedIcon
+		b.bar[i] = BasicUnCompletedIcon//b.config.unCompletedIcon
 	}
 	return b
 }
@@ -178,10 +178,10 @@ func (bc *BarConfig) SetCompletedIcon(icon rune) {
 	}
 }
 
-// SetUnCompletedIcon 设置未完成进度的显示图案
-func (bc *BarConfig) SetUnCompletedIcon(icon byte) {
-	bc.unCompletedIcon = icon
-}
+//// SetUnCompletedIcon 设置未完成进度的显示图案
+//func (bc *BarConfig) SetUnCompletedIcon(icon byte) {
+//	bc.unCompletedIcon = icon
+//}
 
 // SetCursorIcon 设置游标的显示图案
 func (bc *BarConfig) SetCursorIcon(icon rune) {
@@ -218,8 +218,8 @@ func (b *__bar) getPercent() float32 {
 	return float32(b.currentPosition) / float32(b.total) * 100
 }
 
-// Play 执行一次记录
-func (b *__bar) Play(cur int64) {
+// Update 执行一次记录
+func (b *__bar) Update(cur int64) {
 	b.currentPosition = cur
 	latest := b.getPercent()
 	//如果写成：int(latest-b.percent)会损失很多精度，导致最后进度条无法到达终点
@@ -244,11 +244,10 @@ func (b *__bar) Play(cur int64) {
 func (b *__bar) excursion(start,end int){
 	for i:=start;i<end;i++{
 		if int(b.bar[i]) < 100 {
-			b.bar[i] = b.config.unCompletedIcon
+			b.bar[i] = BasicUnCompletedIcon//b.config.unCompletedIcon
 		}
 	}
 }
-
 
 // printInLinux 在linux模式下的打印函数
 func (bc *BarConfig)printInLinux(str []byte,percent float32,currPos,total int64){

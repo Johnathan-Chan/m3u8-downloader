@@ -1,4 +1,4 @@
-package main
+package M3u8Downloader
 
 import (
 	"fmt"
@@ -14,18 +14,24 @@ import (
 
 func TestBody(t *testing.T) {
 	m3u8 := NewDownloader()
-	m3u8.SetUrl("https://v.bdcache.com/vh1/640/b243d8d9c2de0a7e10bbe1d7ecb41af73ccbb03c/master.m3u8")
-	m3u8.SetMovieName("無鬼イキトランス10パート2·樱井友树")
-	m3u8.SetSaveDirectory("D:/Users/oopsguy/m3u8_down/s/")
-	err := m3u8.Download()
-	if err != nil {
-		fmt.Println(err.Error())
-		return
+	//m3u8.SetUrl("https://v.bdcache.com/vh1/640/b243d8d9c2de0a7e10bbe1d7ecb41af73ccbb03c/master.m3u8")
+	//m3u8.SetMovieName("無鬼イキトランス10パート2·樱井友树")
+	m3u8.SetUrl("https://v.bdcache.com/vh1/640/e72497c9caf8146269d6b4e06e0979efc50109cb/master.m3u8")
+	m3u8.SetMovieName("性感女孩镶边和更热的肛门")
+	//m3u8.SetUrl(TestUrl1)
+	//m3u8.SetMovieName("浴血黑帮第四季第一集")
+	m3u8.SetSaveDirectory("D:/Users/oopsguy/asl")
+	m3u8.SetIfShowTheBar(true)
+	m3u8.SetDownloadModel(WriteIntoCacheAndSaveModel)
+	//m3u8.SetDownloadModel(SaveAsTsFileAndMergeModel)
+	if m3u8.DefaultDownload(){
+		fmt.Println("下载成功")
 	}
-	err = m3u8.MergeFileInDir("D:/Users/oopsguy/m3u8_down/s/", "無鬼イキトランス10パート2·樱井友树.mp4")
-	if err != nil {
-		fmt.Println(err)
-		return
+	fmt.Println("启动新下载：")
+	m3u8.SetUrl("https://v.bdcache.com/vh1/640/09bb20a3d0f48bb872d60ad30022cd3299aea4c6/master.m3u8")
+	m3u8.SetMovieName("女同性恋肛门自助餐")
+	if m3u8.DefaultDownload(){
+		fmt.Println("下载成功")
 	}
 	//m3u8.ParseM3u8File()
 	//body:=httpGetBodyToByte()
@@ -184,5 +190,14 @@ func TestFileTime(t *testing.T) {
 		fmt.Println("最后访问时间：",winFileAttr.LastAccessTime.Nanoseconds()/1e9)
 		fmt.Println("最后修改时间：",winFileAttr.LastWriteTime.Nanoseconds()/1e9)
 
+	}
+}
+
+
+func TestDirCreat(t *testing.T){
+	err := os.MkdirAll("d:/fuck/", os.ModePerm)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
 	}
 }
