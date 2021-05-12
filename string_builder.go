@@ -98,7 +98,7 @@ func (b *StringBuilder) Write(p []byte) int {
 
 // WriteByte appends the byte c to b's buffer.
 // The returned error is always nil.
-func (b *StringBuilder) WriteByte(c byte)  {
+func (b *StringBuilder) WriteByte(c byte) {
 	b.copyCheck()
 	b.buf = append(b.buf, c)
 }
@@ -127,4 +127,3 @@ func (b *StringBuilder) WriteString(s string) int {
 	b.buf = append(b.buf, s...)
 	return len(s)
 }
-

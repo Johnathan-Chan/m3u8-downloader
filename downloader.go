@@ -15,17 +15,16 @@ import (
 )
 
 const (
-	CryptMethodAES             CryptMethod = "AES-128"
-	CryptMethodNONE            CryptMethod = "NONE"
-	defaultNumberOfThread                  = 10
+	CryptMethodAES        CryptMethod = "AES-128"
+	CryptMethodNONE       CryptMethod = "NONE"
+	defaultNumberOfThread             = 10
 	//WriteIntoCacheAndSaveModel 使用缓存下载模式的处理器函数,暂时废弃，因为会占用大量内存，且视频质量不高
-	WriteIntoCacheAndSaveModel             = 1
-	SaveAsTsFileAndMergeModel              = 2
-	SuffixMp4                              = ".mp4"
-	SuffixTs                               = ".ts"
-	TestUrl1                               = "https://c.mhkuaibo.com/20200305/WzAhqGg8/1200kb/hls/index.m3u8"
+	WriteIntoCacheAndSaveModel = 1
+	SaveAsTsFileAndMergeModel  = 2
+	SuffixMp4                  = ".mp4"
+	SuffixTs                   = ".ts"
+	TestDownloadUrl            = "https://c.mhkuaibo.com/20200305/WzAhqGg8/1200kb/hls/index.m3u8"
 )
-
 
 const (
 	NoException DownloadExceptionType = iota
@@ -77,7 +76,7 @@ type M3u8Downloader interface {
 	DefaultDownload() bool
 	// ParseM3u8FileEncrypted 解析加密m3u8文件
 	ParseM3u8FileEncrypted(link string) (*Result, error)
-	// Download 根据配置信息执行下载
+	// Download 根据之前的配置开始执行下载
 	Download() error
 	// SetUrl 设置url
 	SetUrl(url string)

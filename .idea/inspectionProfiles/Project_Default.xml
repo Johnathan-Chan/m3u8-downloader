@@ -17,6 +17,7 @@
         <method importPath="M3u8Downloader" receiver="*StringBuilder" name="Write" />
         <method importPath="os" receiver="*File" name="Close" />
         <method importPath="os" receiver="*File" name="Write" />
+        <method importPath="database/sql" receiver="*Rows" name="Close" />
       </methods>
     </inspection_tool>
     <inspection_tool class="GoUnusedConst" enabled="false" level="WARNING" enabled_by_default="false" />

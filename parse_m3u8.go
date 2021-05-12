@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-var(
+var (
 	lineParameterPattern = regexp.MustCompile(`([a-zA-Z-]+)=("[^"]+"|[^",]+)`)
 )
 
-type(
+type (
 	CryptMethod string
 )
 
@@ -22,8 +22,8 @@ func parseLines(lines []string) (*M3u8, error) {
 		i       = 0
 		lineLen = len(lines)
 		m3u8    = &M3u8{}
-		key *Key
-		seg *Segment
+		key     *Key
+		seg     *Segment
 	)
 	for ; i < lineLen; i++ {
 		//TrimSpace返回字符串s的一个片段，去掉Unicode定义的所有前导和尾随空格。
@@ -67,7 +67,6 @@ func parseLines(lines []string) (*M3u8, error) {
 	return m3u8, nil
 }
 
-
 func parseLineParameters(line string) map[string]string {
 	r := lineParameterPattern.FindAllStringSubmatch(line, -1)
 	params := make(map[string]string)
@@ -76,7 +75,6 @@ func parseLineParameters(line string) map[string]string {
 	}
 	return params
 }
-
 
 func AES128Encrypt(origData, key, iv []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)

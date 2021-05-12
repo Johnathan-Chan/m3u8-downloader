@@ -2,6 +2,7 @@ package M3u8Downloader
 
 import (
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,32 +15,25 @@ import (
 
 func TestBody(t *testing.T) {
 	m3u8 := NewDownloader()
-	//m3u8.SetUrl("https://v.bdcache.com/vh1/640/b243d8d9c2de0a7e10bbe1d7ecb41af73ccbb03c/master.m3u8")
-	//m3u8.SetMovieName("無鬼イキトランス10パート2·樱井友树")
-	m3u8.SetUrl("https://v.bdcache.com/vh1/640/e72497c9caf8146269d6b4e06e0979efc50109cb/master.m3u8")
-	m3u8.SetMovieName("性感女孩镶边和更热的肛门")
-	//m3u8.SetUrl(TestUrl1)
-	//m3u8.SetMovieName("浴血黑帮第四季第一集")
-	m3u8.SetSaveDirectory("D:/Users/oopsguy/asl")
-	m3u8.SetIfShowTheBar(true)
-	m3u8.SetDownloadModel(WriteIntoCacheAndSaveModel)
-	//m3u8.SetDownloadModel(SaveAsTsFileAndMergeModel)
-	if m3u8.DefaultDownload(){
-		fmt.Println("下载成功")
-	}
 	fmt.Println("启动新下载：")
-	m3u8.SetUrl("https://v.bdcache.com/vh1/640/09bb20a3d0f48bb872d60ad30022cd3299aea4c6/master.m3u8")
-	m3u8.SetMovieName("女同性恋肛门自助餐")
-	if m3u8.DefaultDownload(){
+	m3u8.SetUrl(TestDownloadUrl)
+	m3u8.SetMovieName("浴血黑帮第四季第一集")
+	if m3u8.DefaultDownload() {
 		fmt.Println("下载成功")
 	}
-	//m3u8.ParseM3u8File()
-	//body:=httpGetBodyToByte()
-	//fmt.Println(string(body))
 }
 
+func TestIfExit(t *testing.T) {
+	dir := "D:/Users/FuckVideo/0000.ts"
+	exists, err := PathExists(dir)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(exists)
+}
 
-func TestStr(t *testing.T){
+func TestStr(t *testing.T) {
 	var id64 int64 = 99
 	// method 2:
 	idPointer := (*int)(unsafe.Pointer(&id64))
@@ -55,12 +49,10 @@ func TestStr(t *testing.T){
 	fmt.Println(str)
 }
 
-func TestNumber(t *testing.T){
-	n:=processNum(520)
+func TestNumber(t *testing.T) {
+	n := processNum(520)
 	fmt.Println(*(*string)(unsafe.Pointer(&n)))
 }
-
-
 
 //基于打印结果的一些时间测试
 func TestUrl(t *testing.T) {
@@ -78,7 +70,7 @@ func TestUrl(t *testing.T) {
 	//fmt.Println(m3u8ParseResult.M3u8.Segments[66])
 }
 
-func TestTime(t *testing.T){
+func TestTime(t *testing.T) {
 	//遍历打印所有的文件名
 	var s []string
 
@@ -89,8 +81,9 @@ func TestTime(t *testing.T){
 	}
 
 }
+
 //获取当前目录下的文件及目录信息
-func pwdTest(){
+func pwdTest() {
 	pwd, _ := os.Getwd()
 	//获取文件或目录相关信息
 	fileInfoList, err := ioutil.ReadDir(pwd)
@@ -127,14 +120,13 @@ func GetAllFile(pathname string, s []string) ([]string, error) {
 	return s, nil
 }
 
-
 // 递归获取指定目录下的所有文件名
 func GetAllFileTime(pathname string) ([]string, error) {
 	result := []string{}
 
 	fis, err := ioutil.ReadDir(pathname)
 	if err != nil {
-		fmt.Printf("读取文件目录失败，pathname=%v, err=%v \n",pathname, err)
+		fmt.Printf("读取文件目录失败，pathname=%v, err=%v \n", pathname, err)
 		return result, err
 	}
 
@@ -145,7 +137,7 @@ func GetAllFileTime(pathname string) ([]string, error) {
 		if fi.IsDir() {
 			temp, err := GetAllFileTime(fullname)
 			if err != nil {
-				fmt.Printf("读取文件目录失败,fullname=%v, err=%v",fullname, err)
+				fmt.Printf("读取文件目录失败,fullname=%v, err=%v", fullname, err)
 				return result, err
 			}
 			result = append(result, temp...)
@@ -169,8 +161,8 @@ func TestFileTime(t *testing.T) {
 	files, _ = GetAllFileTime("D:/Users/oopsguy/m3u8_down/s")
 
 	fmt.Println("目录下的所有文件如下")
-	for i:=0;i<len(files);i++ {
-		fmt.Println("文件名：",files[i])
+	for i := 0; i < len(files); i++ {
+		fmt.Println("文件名：", files[i])
 
 		// 获取文件原来的访问时间，修改时间
 		finfo, _ := os.Stat(files[i])
@@ -186,15 +178,14 @@ func TestFileTime(t *testing.T) {
 		//fmt.Println("文件创建时间：",SecondToTime(winFileAttr.CreationTime.Nanoseconds()/1e9))
 		//fmt.Println("最后访问时间：",SecondToTime(winFileAttr.LastAccessTime.Nanoseconds()/1e9))
 		//fmt.Println("最后修改时间：",SecondToTime(winFileAttr.LastWriteTime.Nanoseconds()/1e9))
-		fmt.Println("文件创建时间：",winFileAttr.CreationTime.Nanoseconds()/1e9)
-		fmt.Println("最后访问时间：",winFileAttr.LastAccessTime.Nanoseconds()/1e9)
-		fmt.Println("最后修改时间：",winFileAttr.LastWriteTime.Nanoseconds()/1e9)
+		fmt.Println("文件创建时间：", winFileAttr.CreationTime.Nanoseconds()/1e9)
+		fmt.Println("最后访问时间：", winFileAttr.LastAccessTime.Nanoseconds()/1e9)
+		fmt.Println("最后修改时间：", winFileAttr.LastWriteTime.Nanoseconds()/1e9)
 
 	}
 }
 
-
-func TestDirCreat(t *testing.T){
+func TestDirCreat(t *testing.T) {
 	err := os.MkdirAll("d:/fuck/", os.ModePerm)
 	if err != nil {
 		fmt.Println(err.Error())
