@@ -149,7 +149,7 @@ func Finish()
 ~~~
 - 完成处理方法，在完成后会将相关数据归零，以便重新使用
 
-#####func Setting
+##### func Setting
 ~~~go
 func Setting() *BarConfig
 ~~~
@@ -161,7 +161,7 @@ func UpdateConfig(newConfig *BarConfig)
 ~~~
 - 更新配置信息对象
 
-#####func ReSetRange
+##### func ReSetRange
 ~~~go
 func ReSetRange(start, total int64)
 ~~~ 
