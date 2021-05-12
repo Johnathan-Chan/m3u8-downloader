@@ -18,6 +18,7 @@ func TestBody(t *testing.T) {
 	fmt.Println("启动新下载：")
 	m3u8.SetUrl(TestDownloadUrl)
 	m3u8.SetMovieName("浴血黑帮第四季第一集")
+	m3u8.SetIfShowTheBar(true)
 	if m3u8.DefaultDownload() {
 		fmt.Println("下载成功")
 	}

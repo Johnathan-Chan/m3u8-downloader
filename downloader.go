@@ -23,7 +23,7 @@ const (
 	SaveAsTsFileAndMergeModel  = 2
 	SuffixMp4                  = ".mp4"
 	SuffixTs                   = ".ts"
-	TestDownloadUrl            = "https://c.mhkuaibo.com/20200305/WzAhqGg8/1200kb/hls/index.m3u8"
+	TestDownloadUrl            = "https://v2.dious.cc/20201008/ojroOJOt/1000kb/hls/index.m3u8"
 )
 
 const (
@@ -107,7 +107,7 @@ type m3u8downloader struct {
 	//waitGroup 用来保证线程同步
 	waitGroup *sync.WaitGroup
 	// buffer 用于构造一些字符串所需要使用的缓冲区
-	buffer []StringBuilder
+	buffer []strings.Builder
 	// cacheMap 在使用“按顺序写入”下载模式时承载缓存信息
 	//建对应着视频的索引，值对应的暂时缓存在内存中等待写入的请求结果对象的[]byte信息
 	cacheMap map[int][]byte
@@ -192,7 +192,7 @@ func NewDownloaderWithConfig(config *DownloadConfig) M3u8Downloader {
 func defaultConstructor(config *DownloadConfig) M3u8Downloader {
 	return &m3u8downloader{
 		config:      config,
-		buffer:      make([]StringBuilder, defaultNumberOfThread),
+		buffer:      make([]strings.Builder, defaultNumberOfThread),
 		cacheMap:    nil,
 		suffixList:  nil,
 		exception:   NoException,
@@ -252,7 +252,7 @@ func (md *m3u8downloader) SetIfShowTheBar(ifShow bool) {
 // SetNumOfThread 设置线程数量
 func (md *m3u8downloader) SetNumOfThread(num int) {
 	md.config.NumOfThreads = num
-	md.buffer = make([]StringBuilder, num)
+	md.buffer = make([]strings.Builder, num)
 
 }
 
@@ -464,7 +464,7 @@ func (md *m3u8downloader) publishDownloadTask() {
 
 // WriteIntoCacheAndSaveProcessor 使用缓存下载模式的处理器函数,暂时废弃，因为会占用大量内存，且视频质量不高
 func (md *m3u8downloader) WriteIntoCacheAndSaveProcessor() {
-	var buffer StringBuilder
+	var buffer strings.Builder
 	buffer.WriteString(md.config.SaveDirectory)
 	buffer.WriteString(md.config.VideoName)
 	movie, err := os.OpenFile(buffer.String(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
@@ -622,25 +622,3 @@ func (md *m3u8downloader) ParseM3u8FileEncrypted(link string) (*Result, error) {
 	return result, nil
 }
 
-//func httpDo() {
-//	client := &http.Client{}
-//
-//	req, err := http.NewRequest("POST", "http://www.01happy.com/demo/accept.php", strings.NewReader("name=cjb"))
-//	if err != nil {
-//		// handle error
-//	}
-//
-//	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-//	req.Header.Set("Cookie", "name=anny")
-//
-//	resp, err := client.Do(req)
-//
-//	defer resp.Body.Close()
-//
-//	body, err := ioutil.ReadAll(resp.Body)
-//	if err != nil {
-//		// handle error
-//	}
-//
-//	fmt.Println(string(body))
-//}

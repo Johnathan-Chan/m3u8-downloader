@@ -67,7 +67,7 @@ func httpGet(url string) (io.ReadCloser, DownloadExceptionType) {
 // mergeFile 合并文件主函数
 func mergeFile(path string, fileList []string, saveName string) error {
 	var (
-		buffer StringBuilder
+		buffer strings.Builder
 		err    error
 		movie  *os.File
 	)

@@ -2,6 +2,7 @@ package M3u8Downloader
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -21,14 +22,13 @@ func TestBar(t *testing.T) {
 
 //█████
 func TestRune(t *testing.T) {
-	var a StringBuilder
+	var a strings.Builder
 	for i := 0; i < 6; i++ {
 		a.WriteRune('█')
 	}
 	for i := 6; i < 10; i++ {
 		a.WriteRune('-')
 	}
-	fmt.Println(len(a.GetBuffer()))
 	fmt.Println(a.String())
 }
 

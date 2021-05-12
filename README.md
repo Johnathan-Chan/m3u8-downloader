@@ -12,7 +12,7 @@
 
 ### 使用说明
 
-1、 你可以设置进度条，但默认模式最好在WindowsTerminal中或Linux环境使用，在Windows CMD中会出现显示异常，需要手动更改\
+1、 我们的下载可以使用进入条，但进度条的默认模式最好在WindowsTerminal中或Linux环境使用，在Windows CMD中会出现显示异常，需要手动更改\
 2、以下是一个简单示例：
 ~~~go
 func main() {
@@ -27,6 +27,7 @@ func main() {
 	}
 }
 ~~~
+
 ### M3u8Download 接口文档
 
 ##### func NewDownloader 
